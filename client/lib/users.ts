@@ -1,68 +1,61 @@
-export const roles = ["User", "Superuser", "Admin"] as const;
+// Role values as the API sends them.
+export const roles = ["User", "SuperUser", "Admin"] as const;
 
 export type Role = (typeof roles)[number];
 
+export const roleLabels: Record<Role, string> = {
+  User: "User",
+  SuperUser: "Superuser",
+  Admin: "Admin",
+};
+
+// The same limits the API enforces. Shown in forms so people see them before submitting.
+export const USERNAME_MIN = 3;
+export const USERNAME_MAX = 32;
+export const EMAIL_MAX = 254;
+export const PASSWORD_MIN = 12;
+export const PASSWORD_MAX = 128;
+
 export type User = {
-  id: number;
+  id: string;
   username: string;
   email: string;
   role: Role;
   createdAt: string;
 };
 
-export type SessionUser = {
-  name: string;
-  username: string;
-  role: Role;
-};
+export function toRole(value: string | undefined): Role {
+  return roles.find((role) => role === value) ?? "User";
+}
 
-// Sample data until the API and login exist. Change `currentUser.role`
-// to preview the page as a User or Superuser.
-export const currentUser: SessionUser = {
-  name: "Mette Kristensen",
-  username: "mette.kristensen",
-  role: "Admin",
-};
-
-export const sampleUsers: User[] = [
-  { id: 1, username: "mette.kristensen", email: "mette.kristensen@example.com", role: "Admin", createdAt: "2025-03-03" },
-  { id: 2, username: "jonas.holm", email: "jonas.holm@example.com", role: "Admin", createdAt: "2025-03-12" },
-  { id: 3, username: "sofie.lund", email: "sofie.lund@example.com", role: "Superuser", createdAt: "2025-04-02" },
-  { id: 4, username: "anders.nielsen", email: "anders.nielsen@example.com", role: "Superuser", createdAt: "2025-05-19" },
-  { id: 5, username: "freja.madsen", email: "freja.madsen@example.com", role: "User", createdAt: "2025-06-07" },
-  { id: 6, username: "ida.pedersen", email: "ida.pedersen@example.com", role: "User", createdAt: "2025-08-11" },
-  { id: 7, username: "lars.thomsen", email: "lars.thomsen@example.com", role: "User", createdAt: "2025-09-23" },
-  { id: 8, username: "mikkel.jensen", email: "mikkel.jensen@example.com", role: "User", createdAt: "2025-11-04" },
-  { id: 9, username: "emma.larsen", email: "emma.larsen@example.com", role: "User", createdAt: "2026-01-15" },
-  { id: 10, username: "noah.sorensen", email: "noah.sorensen@example.com", role: "User", createdAt: "2026-02-02" },
-  { id: 11, username: "clara.rasmussen", email: "clara.rasmussen@example.com", role: "User", createdAt: "2026-03-28" },
-  { id: 12, username: "oscar.andersen", email: "oscar.andersen@example.com", role: "User", createdAt: "2026-05-09" },
-  { id: 13, username: "alma.christensen", email: "alma.christensen@example.com", role: "User", createdAt: "2026-07-21" },
-  { id: 14, username: "viktor.poulsen", email: "viktor.poulsen@example.com", role: "User", createdAt: "2026-10-24" },
-];
-
-// These checks only decide which buttons to show. The server must check
-// the same rules on every request.
+// These checks only decide which buttons to show. The API checks the same
+// rules on every request.
 export function canCreateUsers(actor: Role) {
-  return actor === "Admin" || actor === "Superuser";
+  return actor === "Admin" || actor === "SuperUser";
 }
 
 export function canManageUser(actor: Role, target: Role) {
   if (actor === "Admin") return true;
-  if (actor === "Superuser") return target === "User";
+  if (actor === "SuperUser") return target === "User";
   return false;
+}
+
+// Which accounts each role can see. The API applies the same rule to every request.
+export function visibleRoles(actor: Role): Role[] {
+  return actor === "Admin" ? [...roles] : ["User"];
 }
 
 export function assignableRoles(actor: Role): Role[] {
   if (actor === "Admin") return [...roles];
-  if (actor === "Superuser") return ["User"];
+  if (actor === "SuperUser") return ["User"];
   return [];
 }
 
 const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-// "2026-10-26" -> "26 Oct 2026"
+// "2026-10-26T09:14:00Z" -> "26 Oct 2026"
 export function formatDate(isoDate: string) {
-  const [year, month, day] = isoDate.split("-").map(Number);
+  const [year, month, day] = isoDate.slice(0, 10).split("-").map(Number);
+  if (!year || !month || !day) return "";
   return `${day} ${months[month - 1]} ${year}`;
 }

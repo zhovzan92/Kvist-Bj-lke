@@ -1,17 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   ArrowDownIcon,
   ArrowUpDownIcon,
   ArrowUpIcon,
+  CircleAlertIcon,
   PencilIcon,
+  RotateCwIcon,
   SearchIcon,
   Trash2Icon,
   UserPlusIcon,
   XIcon,
 } from "lucide-react";
 import { cn } from "cn";
+import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -31,14 +34,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ApiError, getUsers } from "@/lib/api";
+import { setSession, useSession } from "@/lib/session";
 import {
   assignableRoles,
   canCreateUsers,
   canManageUser,
   formatDate,
+  roleLabels,
   roles,
   type Role,
-  type SessionUser,
+  visibleRoles,
   type User,
 } from "@/lib/users";
 
@@ -60,7 +66,7 @@ type DialogState =
   | { type: "delete"; user: User };
 
 const columns: { key: SortKey; label: string; className: string }[] = [
-  { key: "id", label: "ID", className: "w-20" },
+  { key: "id", label: "ID", className: "w-28" },
   { key: "username", label: "Username", className: "w-[26%]" },
   { key: "email", label: "Email", className: "" },
   { key: "role", label: "Role", className: "w-32" },
@@ -69,13 +75,17 @@ const columns: { key: SortKey; label: string; className: string }[] = [
 
 function compareUsers(a: User, b: User, key: SortKey) {
   switch (key) {
-    case "id":
-      return a.id - b.id;
     case "role":
       // By rank, not alphabetically: User < Superuser < Admin.
-      return roles.indexOf(a.role) - roles.indexOf(b.role) || a.id - b.id;
+      return (
+        roles.indexOf(a.role) - roles.indexOf(b.role) ||
+        a.username.localeCompare(b.username)
+      );
     case "createdAt":
-      return a.createdAt.localeCompare(b.createdAt) || a.id - b.id;
+      return (
+        a.createdAt.localeCompare(b.createdAt) ||
+        a.username.localeCompare(b.username)
+      );
     default:
       return a[key].localeCompare(b[key]);
   }
@@ -83,33 +93,81 @@ function compareUsers(a: User, b: User, key: SortKey) {
 
 function matchesSearch(user: User, search: string) {
   if (!search) return true;
+  // IDs are GUIDs, so match from the start: "3f2a" finds 3f2a9c1e-….
   const id = search.replace(/^#/, "");
-  if (/^\d+$/.test(id) && user.id === Number(id)) return true;
   return (
+    (id.length > 0 && user.id.toLowerCase().startsWith(id)) ||
     user.username.toLowerCase().includes(search) ||
     user.email.toLowerCase().includes(search)
   );
 }
 
-export function UsersTable({
-  users,
-  currentUser,
-}: {
-  users: User[];
-  currentUser: SessionUser;
-}) {
+export function UsersTable() {
+  // DashboardShell only renders this once someone is logged in.
+  const session = useSession()!;
+  const currentUser = session.user;
+
+  const [users, setUsers] = useState<User[] | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
-  const [sort, setSort] = useState<Sort>({ key: "id", direction: "asc" });
+  const [sort, setSort] = useState<Sort>({ key: "createdAt", direction: "asc" });
   const [page, setPage] = useState(0);
   const [dialog, setDialog] = useState<DialogState | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogKey, setDialogKey] = useState(0);
 
   const actorRole = currentUser.role;
   const search = query.trim().toLowerCase();
   const hasFilters = search !== "" || roleFilter !== "all";
 
-  const filtered = users
+  const load = useCallback(() => {
+    getUsers()
+      .then((list) => {
+        setUsers(list);
+        setLoadError(null);
+      })
+      .catch((err) =>
+        setLoadError(err instanceof ApiError ? err.message : "Couldn't load users.")
+      );
+  }, []);
+
+  useEffect(load, [load]);
+
+  function retry() {
+    setUsers(null);
+    setLoadError(null);
+    load();
+  }
+
+  function handleSaved(saved: User, created: boolean) {
+    toast.success(created ? `Created ${saved.username}.` : `Saved changes to ${saved.username}.`);
+    if (created) {
+      setUsers((list) => (list ? [...list, saved] : list));
+      // New users are the newest, so with the default sort they land on the last page.
+      if (sort.key === "createdAt" && sort.direction === "asc") {
+        setPage(Number.MAX_SAFE_INTEGER);
+      }
+      return;
+    }
+    setUsers((list) => list?.map((user) => (user.id === saved.id ? saved : user)) ?? null);
+    // Keep the header and permissions in step when you edit yourself. A new
+    // role can change which accounts you may see, so the list is fetched again.
+    if (saved.id === currentUser.id) {
+      setSession({ ...session, user: saved });
+      if (saved.role !== currentUser.role) {
+        setRoleFilter("all");
+        load();
+      }
+    }
+  }
+
+  function handleDeleted(deleted: User) {
+    toast.success(`Deleted ${deleted.username}.`);
+    setUsers((list) => list?.filter((user) => user.id !== deleted.id) ?? null);
+  }
+
+  const filtered = (users ?? [])
     .filter(
       (user) =>
         (roleFilter === "all" || user.role === roleFilter) &&
@@ -126,13 +184,15 @@ export function UsersTable({
   const visible = filtered.slice(pageStart, pageStart + PAGE_SIZE);
 
   // Reserve room for a full page, but don't pad out a short list of users.
-  const rowSlots = Math.min(PAGE_SIZE, Math.max(users.length, 1));
-  const fillerRows = visible.length === 0 ? 0 : rowSlots - visible.length;
+  const rowSlots = users ? Math.min(PAGE_SIZE, Math.max(users.length, 1)) : PAGE_SIZE;
+  const fillerRows = !users || visible.length === 0 ? 0 : rowSlots - visible.length;
 
   const showActions = roles.some((role) => canManageUser(actorRole, role));
   const columnCount = columns.length + (showActions ? 1 : 0);
 
   function openDialog(next: DialogState) {
+    // A fresh key per opening, so the form never shows a previous attempt's error.
+    setDialogKey((key) => key + 1);
     setDialog(next);
     setDialogOpen(true);
   }
@@ -211,9 +271,9 @@ export function UsersTable({
               </SelectTrigger>
               <SelectContent position="popper" align="start">
                 <SelectItem value="all">All roles</SelectItem>
-                {roles.map((role) => (
+                {visibleRoles(actorRole).map((role) => (
                   <SelectItem key={role} value={role}>
-                    {role}
+                    {roleLabels[role]}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -278,7 +338,44 @@ export function UsersTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {visible.length === 0 ? (
+            {loadError ? (
+              <TableRow className="hover:bg-transparent">
+                <TableCell
+                  colSpan={columnCount}
+                  className="text-center whitespace-normal"
+                  style={{ height: rowSlots * ROW_HEIGHT }}
+                >
+                  <CircleAlertIcon className="mx-auto size-5 text-destructive" />
+                  <p className="mt-2 font-medium">Couldn&apos;t load users</p>
+                  <p className="mt-1 text-muted-foreground">{loadError}</p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="mt-4"
+                    onClick={retry}
+                  >
+                    <RotateCwIcon />
+                    Try again
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ) : !users ? (
+              Array.from({ length: PAGE_SIZE }, (_, index) => (
+                <TableRow
+                  key={`loading-${index}`}
+                  aria-hidden="true"
+                  className="hover:bg-transparent"
+                  style={{ height: ROW_HEIGHT }}
+                >
+                  {Array.from({ length: columnCount }, (_, cell) => (
+                    <TableCell key={cell}>
+                      <div className="h-4 w-3/4 animate-pulse rounded-md bg-muted motion-reduce:animate-none" />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : visible.length === 0 ? (
               <TableRow className="hover:bg-transparent">
                 <TableCell
                   colSpan={columnCount}
@@ -302,11 +399,14 @@ export function UsersTable({
               </TableRow>
             ) : (
               visible.map((user) => {
-                const isYou = user.username === currentUser.username;
+                const isYou = user.id === currentUser.id;
                 return (
                   <TableRow key={user.id} style={{ height: ROW_HEIGHT }}>
-                    <TableCell className="font-mono text-[13px] text-muted-foreground tabular-nums">
-                      {user.id}
+                    <TableCell
+                      className="font-mono text-[13px] text-muted-foreground"
+                      title={user.id}
+                    >
+                      {user.id.slice(0, 8)}
                     </TableCell>
                     <TableCell>
                       <div className="flex min-w-0 items-center gap-2">
@@ -322,7 +422,7 @@ export function UsersTable({
                     >
                       {user.email}
                     </TableCell>
-                    <TableCell>{user.role}</TableCell>
+                    <TableCell>{roleLabels[user.role]}</TableCell>
                     <TableCell className="text-muted-foreground tabular-nums">
                       {formatDate(user.createdAt)}
                     </TableCell>
@@ -340,19 +440,22 @@ export function UsersTable({
                               <PencilIcon />
                               Edit
                             </Button>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              aria-label={`Delete ${user.username}`}
-                              className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                              onClick={() =>
-                                openDialog({ type: "delete", user })
-                              }
-                            >
-                              <Trash2Icon />
-                              Delete
-                            </Button>
+                            {/* You can't delete your own account. */}
+                            {!isYou && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                aria-label={`Delete ${user.username}`}
+                                className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                                onClick={() =>
+                                  openDialog({ type: "delete", user })
+                                }
+                              >
+                                <Trash2Icon />
+                                Delete
+                              </Button>
+                            )}
                           </div>
                         )}
                       </TableCell>
@@ -379,7 +482,11 @@ export function UsersTable({
             className="text-sm text-muted-foreground tabular-nums"
             aria-live="polite"
           >
-            {filtered.length === 0
+            {!users
+              ? loadError
+                ? "Users not loaded"
+                : "Loading users…"
+              : filtered.length === 0
               ? "No matching users"
               : `Showing ${pageStart + 1}–${pageStart + visible.length} of ${filtered.length} ${filtered.length === 1 ? "user" : "users"}`}
           </p>
@@ -413,17 +520,20 @@ export function UsersTable({
 
       {dialog?.type === "delete" ? (
         <DeleteUserDialog
+          key={dialogKey}
           user={dialog.user}
           open={dialogOpen}
           onOpenChange={setDialogOpen}
+          onDeleted={handleDeleted}
         />
       ) : dialog ? (
         <UserFormDialog
-          key={dialog.type === "edit" ? dialog.user.id : "new"}
+          key={dialogKey}
           user={dialog.type === "edit" ? dialog.user : undefined}
           roleOptions={assignableRoles(actorRole)}
           open={dialogOpen}
           onOpenChange={setDialogOpen}
+          onSaved={handleSaved}
         />
       ) : null}
     </>

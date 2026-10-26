@@ -1,6 +1,3 @@
-import Link from "next/link";
-
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -9,12 +6,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 
-const linkClass =
-  "rounded-sm text-primary underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card focus-visible:outline-none";
+import { LoginForm } from "./login-form";
 
 export default function Home() {
   return (
@@ -33,57 +26,17 @@ export default function Home() {
             Sign in
           </CardTitle>
           <CardDescription>
-            Enter your email and password to continue.
+            Enter your username and password to continue.
           </CardDescription>
         </CardHeader>
 
         <CardContent>
-          <form className="flex flex-col gap-4">
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                placeholder="you@example.com"
-              />
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password</Label>
-                <Link href="#" className={`text-sm ${linkClass}`}>
-                  Forgot password?
-                </Link>
-              </div>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-              />
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Checkbox id="remember" name="remember" />
-              <Label htmlFor="remember" className="font-normal">
-                Remember me
-              </Label>
-            </div>
-
-            <Button type="button" className="mt-2 w-full">
-              Sign in
-            </Button>
-          </form>
+          <LoginForm />
         </CardContent>
 
         <CardFooter className="justify-center">
-          <p className="text-sm text-muted-foreground">
-            Don&apos;t have an account?{" "}
-            <Link href="#" className={`font-medium ${linkClass}`}>
-              Sign up
-            </Link>
+          <p className="text-center text-sm text-muted-foreground">
+            Accounts are created by an administrator.
           </p>
         </CardFooter>
       </Card>
