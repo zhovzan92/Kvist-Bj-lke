@@ -1,11 +1,30 @@
 {
   "version": 4,
   "targets": {
-    "net10.0": {}
+    "net10.0": {
+      "Infra/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v10.0",
+        "compile": {
+          "bin/placeholder/Infra.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/Infra.dll": {}
+        }
+      }
+    }
   },
-  "libraries": {},
+  "libraries": {
+    "Infra/1.0.0": {
+      "type": "project",
+      "path": "../Infra/Infra.csproj",
+      "msbuildProject": "../Infra/Infra.csproj"
+    }
+  },
   "projectFileDependencyGroups": {
-    "net10.0": []
+    "net10.0": [
+      "Infra >= 1.0.0"
+    ]
   },
   "packageFolders": {
     "C:\\Users\\zhomuh01\\.nuget\\packages\\": {}
@@ -32,7 +51,11 @@
         "net10.0": {
           "framework": "net10.0",
           "targetAlias": "net10.0",
-          "projectReferences": {}
+          "projectReferences": {
+            "C:\\Users\\zhomuh01\\RiderProjects\\Kvist-Bj-lke\\server\\Infra\\Infra.csproj": {
+              "projectPath": "C:\\Users\\zhomuh01\\RiderProjects\\Kvist-Bj-lke\\server\\Infra\\Infra.csproj"
+            }
+          }
         }
       },
       "warningProperties": {

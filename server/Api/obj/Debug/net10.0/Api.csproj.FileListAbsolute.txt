@@ -27,3 +27,9 @@ C:\Users\zhomuh01\RiderProjects\Kvist-Bj-lke\server\Api\obj\Debug\net10.0\refint
 C:\Users\zhomuh01\RiderProjects\Kvist-Bj-lke\server\Api\obj\Debug\net10.0\Api.pdb
 C:\Users\zhomuh01\RiderProjects\Kvist-Bj-lke\server\Api\obj\Debug\net10.0\Api.genruntimeconfig.cache
 C:\Users\zhomuh01\RiderProjects\Kvist-Bj-lke\server\Api\obj\Debug\net10.0\ref\Api.dll
+C:\Users\zhomuh01\RiderProjects\Kvist-Bj-lke\server\Api\bin\Debug\net10.0\Infra.dll
+C:\Users\zhomuh01\RiderProjects\Kvist-Bj-lke\server\Api\bin\Debug\net10.0\Service.dll
+C:\Users\zhomuh01\RiderProjects\Kvist-Bj-lke\server\Api\bin\Debug\net10.0\Service.pdb
+C:\Users\zhomuh01\RiderProjects\Kvist-Bj-lke\server\Api\bin\Debug\net10.0\Infra.pdb
+C:\Users\zhomuh01\RiderProjects\Kvist-Bj-lke\server\Api\obj\Debug\net10.0\Api.csproj.AssemblyReference.cache
+C:\Users\zhomuh01\RiderProjects\Kvist-Bj-lke\server\Api\obj\Debug\net10.0\Api.csproj.Up2Date

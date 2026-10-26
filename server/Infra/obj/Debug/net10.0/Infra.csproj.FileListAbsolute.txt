@@ -1,0 +1,12 @@
+C:\Users\zhomuh01\RiderProjects\Kvist-Bj-lke\server\Infra\bin\Debug\net10.0\Infra.deps.json
+C:\Users\zhomuh01\RiderProjects\Kvist-Bj-lke\server\Infra\bin\Debug\net10.0\Infra.dll
+C:\Users\zhomuh01\RiderProjects\Kvist-Bj-lke\server\Infra\bin\Debug\net10.0\Infra.pdb
+C:\Users\zhomuh01\RiderProjects\Kvist-Bj-lke\server\Infra\obj\Debug\net10.0\Infra.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\zhomuh01\RiderProjects\Kvist-Bj-lke\server\Infra\obj\Debug\net10.0\Infra.AssemblyInfoInputs.cache
+C:\Users\zhomuh01\RiderProjects\Kvist-Bj-lke\server\Infra\obj\Debug\net10.0\Infra.AssemblyInfo.cs
+C:\Users\zhomuh01\RiderProjects\Kvist-Bj-lke\server\Infra\obj\Debug\net10.0\Infra.csproj.CoreCompileInputs.cache
+C:\Users\zhomuh01\RiderProjects\Kvist-Bj-lke\server\Infra\obj\Debug\net10.0\Infra.sourcelink.json
+C:\Users\zhomuh01\RiderProjects\Kvist-Bj-lke\server\Infra\obj\Debug\net10.0\Infra.dll
+C:\Users\zhomuh01\RiderProjects\Kvist-Bj-lke\server\Infra\obj\Debug\net10.0\refint\Infra.dll
+C:\Users\zhomuh01\RiderProjects\Kvist-Bj-lke\server\Infra\obj\Debug\net10.0\Infra.pdb
+C:\Users\zhomuh01\RiderProjects\Kvist-Bj-lke\server\Infra\obj\Debug\net10.0\ref\Infra.dll
