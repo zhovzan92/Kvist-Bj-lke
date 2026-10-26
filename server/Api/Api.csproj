@@ -4,10 +4,33 @@
     <ProjectReference Include="..\Service\Service.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.12" />
+    <PackageReference Include="Microsoft.AspNetCore.SpaProxy" Version="10.0.12" />
+    <PackageReference Include="NSwag.AspNetCore" Version="14.7.1" />
+  </ItemGroup>
+
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
+
+  <!-- In development, `dotnet run` also starts the Next.js client and opens it in the browser. -->
+  <PropertyGroup>
+    <SpaRoot>..\..\client\</SpaRoot>
+    <SpaProxyServerUrl>http://localhost:3000</SpaProxyServerUrl>
+    <SpaProxyLaunchCommand>bun run dev</SpaProxyLaunchCommand>
+  </PropertyGroup>
+
+  <!-- Installs the client's packages on the first Debug build. -->
+  <Target Name="EnsureClientPackages" BeforeTargets="Build" Condition=" '$(Configuration)' == 'Debug' And !Exists('$(SpaRoot)node_modules') ">
+    <Exec Command="bun --version" ContinueOnError="true">
+      <Output TaskParameter="ExitCode" PropertyName="BunExitCode" />
+    </Exec>
+    <Error Condition="'$(BunExitCode)' != '0'" Text="Bun is required to run the client. Install it from https://bun.sh and run the build again." />
+    <Message Importance="high" Text="Installing client packages with bun. This only happens once..." />
+    <Exec WorkingDirectory="$(SpaRoot)" Command="bun install" />
+  </Target>
 
 </Project>
