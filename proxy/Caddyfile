@@ -1,0 +1,10 @@
+# The one address visitors use. /api/... goes to the API, everything else to
+# the client, so the browser only talks to one origin and CORS never applies.
+# Caddy passes the visitor's IP on in X-Forwarded-For, which the API's login
+# rate limit relies on.
+:80 {
+	handle_path /api/* {
+		reverse_proxy api:8080
+	}
+	reverse_proxy client:3000
+}

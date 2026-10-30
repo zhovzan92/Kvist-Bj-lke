@@ -28,9 +28,11 @@ cp .env.example .env   # then set JWT_SECRET and ADMIN_PASSWORD
 ./start.sh
 ```
 
-`start.sh` builds and starts the containers, then prints the addresses to open, using this machine's IP on the network: the client on port 8067 and the API on port 18067. Run it again after changing code or `.env`, or if the machine's IP changes, since the client is built with the API's address.
+`start.sh` builds and starts the containers, then prints the addresses to open, e.g. `http://<server-ip>:8067`. Run it again after changing code or `.env`.
 
-Log in with `admin` and the `ADMIN_PASSWORD` from `.env`. Set `SEED_SAMPLE_USERS=true` to add the sample users. To use a hostname instead of the IP, or other ports, set `PUBLIC_HOST`, `API_PORT` and `CLIENT_PORT` in `.env`.
+Everything goes through one port (8067, set with `PORT` in `.env`). A small Caddy proxy sends `/api/...` to the API and everything else to the client, so the browser only talks to one address and works from any IP or hostname without CORS settings. The API and client aren't reachable from the network on their own. The proxy passes on each visitor's IP, so the login rate limit still applies per visitor.
+
+Log in with `admin` and the `ADMIN_PASSWORD` from `.env`. Set `SEED_SAMPLE_USERS=true` to add the sample users.
 
 The database is kept in the `api-data` volume. `docker compose down` stops the app; `docker compose down -v` also deletes the database.
 

@@ -10,61 +10,46 @@ if [ ! -f .env ]; then
   exit 1
 fi
 
-# Reads a setting from .env, or prints the default.
-setting() {
-  local value
-  value=$(grep -E "^$1=" .env | tail -n 1 | cut -d= -f2- || true)
-  echo "${value:-$2}"
-}
+PORT=$(grep -E '^PORT=' .env | tail -n 1 | cut -d= -f2- || true)
+PORT=${PORT:-8067}
 
-# This machine's IP on the network (the one used for outgoing traffic).
-detect_ip() {
+# This machine's IPv4 addresses, leaving out Docker's internal networks.
+addresses() {
   if command -v ip >/dev/null 2>&1; then
-    ip route get 1.1.1.1 2>/dev/null | awk '{for (i = 1; i < NF; i++) if ($i == "src") { print $(i + 1); exit }}'
-  elif hostname -I >/dev/null 2>&1; then
-    hostname -I | awk '{print $1}'
+    ip -4 -o addr show scope global | awk '$2 !~ /^(docker|br-|veth)/ {split($4, a, "/"); print a[1]}'
   else
-    ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || true
+    ifconfig | awk '$1 == "inet" && $2 != "127.0.0.1" {print $2}'
   fi
 }
 
-PUBLIC_HOST=$(setting PUBLIC_HOST "")
-if [ -z "$PUBLIC_HOST" ]; then
-  PUBLIC_HOST=$(detect_ip)
-fi
-if [ -z "$PUBLIC_HOST" ]; then
-  echo "Couldn't find this machine's IP. Set PUBLIC_HOST in .env and try again." >&2
-  exit 1
-fi
-export PUBLIC_HOST
-
-API_PORT=$(setting API_PORT 18067)
-CLIENT_PORT=$(setting CLIENT_PORT 8067)
-
-echo "Building and starting on $PUBLIC_HOST..."
 docker compose up -d --build
 
-# Wait until the API answers, so a crash on startup isn't missed.
+# Wait until the API answers through the proxy, so a crash on startup isn't missed.
+api_up() {
+  local code
+  code=$(curl -s -o /dev/null -m 2 -w '%{http_code}' "http://localhost:$PORT/api/" || true)
+  [ "$code" != "000" ] && [ "$code" != "502" ] && [ "$code" != "503" ]
+}
 if command -v curl >/dev/null 2>&1; then
   printf "Waiting for the API"
   for _ in $(seq 1 30); do
-    if curl -s -o /dev/null -m 2 "http://localhost:$API_PORT/"; then
-      echo " ok"
-      break
-    fi
+    api_up && break
     printf "."
     sleep 1
   done
-  if ! curl -s -o /dev/null -m 2 "http://localhost:$API_PORT/"; then
+  if ! api_up; then
     echo
     echo "The API didn't start. See why with: docker compose logs api" >&2
     exit 1
   fi
+  echo " ok"
 fi
 
 echo
-echo "Kvist & Bjælke is running:"
-echo "  Client:  http://$PUBLIC_HOST:$CLIENT_PORT"
-echo "  API:     http://$PUBLIC_HOST:$API_PORT"
+echo "Kvist & Bjælke is running. Open it on one of these addresses:"
+for ip in $(addresses); do
+  echo "  http://$ip:$PORT"
+done
+echo "  http://localhost:$PORT  (on this machine)"
 echo
 echo "Stop it with: docker compose down"
