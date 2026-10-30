@@ -1,17 +1,19 @@
 # Runs the API and the client. Settings are read from .env (see .env.example).
-#   docker compose up --build
+# Start with ./start.sh, which also finds this machine's network address.
 services:
   api:
     build: ./server
     ports:
-      - "${API_PORT:-5041}:8080"
+      - "${API_PORT:-18067}:8080"
     environment:
       Jwt__Secret: ${JWT_SECRET:?Set JWT_SECRET in .env (at least 32 characters)}
       Admin__Username: ${ADMIN_USERNAME:-admin}
       Admin__Email: ${ADMIN_EMAIL:-admin@example.com}
       Admin__Password: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in .env (at least 12 characters)}
       Seed__Enabled: ${SEED_SAMPLE_USERS:-false}
-      Cors__Origins__0: http://localhost:${CLIENT_PORT:-3000}
+      # Browsers may call the API from the client's address on the network, or from localhost.
+      Cors__Origins__0: http://${PUBLIC_HOST:-localhost}:${CLIENT_PORT:-8067}
+      Cors__Origins__1: http://localhost:${CLIENT_PORT:-8067}
     volumes:
       - api-data:/data
     restart: unless-stopped
@@ -20,9 +22,9 @@ services:
     build:
       context: ./client
       args:
-        NEXT_PUBLIC_API_URL: http://localhost:${API_PORT:-5041}
+        NEXT_PUBLIC_API_URL: http://${PUBLIC_HOST:-localhost}:${API_PORT:-18067}
     ports:
-      - "${CLIENT_PORT:-3000}:3000"
+      - "${CLIENT_PORT:-8067}:3000"
     depends_on:
       - api
     restart: unless-stopped

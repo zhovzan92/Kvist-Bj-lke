@@ -11,7 +11,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # The browser calls the API directly, so its address is built into the client.
-ARG NEXT_PUBLIC_API_URL=http://localhost:5041
+ARG NEXT_PUBLIC_API_URL=http://localhost:18067
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN bun run build

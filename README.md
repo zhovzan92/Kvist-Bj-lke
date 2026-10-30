@@ -25,12 +25,14 @@ Requires Docker only.
 
 ```bash
 cp .env.example .env   # then set JWT_SECRET and ADMIN_PASSWORD
-docker compose up --build
+./start.sh
 ```
 
-The client runs on http://localhost:3000 and the API on http://localhost:5041. Log in with `admin` and the `ADMIN_PASSWORD` from `.env`. The database is kept in the `api-data` volume; `docker compose down -v` deletes it. Set `SEED_SAMPLE_USERS=true` in `.env` to add the sample users.
+`start.sh` builds and starts the containers, then prints the addresses to open, using this machine's IP on the network: the client on port 8067 and the API on port 18067. Run it again after changing code or `.env`, or if the machine's IP changes, since the client is built with the API's address.
 
-Stop any `dotnet run` first, since it uses the same ports.
+Log in with `admin` and the `ADMIN_PASSWORD` from `.env`. Set `SEED_SAMPLE_USERS=true` to add the sample users. To use a hostname instead of the IP, or other ports, set `PUBLIC_HOST`, `API_PORT` and `CLIENT_PORT` in `.env`.
+
+The database is kept in the `api-data` volume. `docker compose down` stops the app; `docker compose down -v` also deletes the database.
 
 ## Roles
 
