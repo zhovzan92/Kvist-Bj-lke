@@ -1,0 +1,11 @@
+**/bin/
+**/obj/
+**/*.db
+**/*.db-shm
+**/*.db-wal
+**/.env
+**/.idea/
+**/.vs/
+**/.DS_Store
+Dockerfile
+.dockerignore

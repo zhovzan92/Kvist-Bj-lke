@@ -19,6 +19,19 @@ This starts the API (http://localhost:5041) and the client (http://localhost:300
 
 Run the tests with `pip install -r tests/requirements.txt` and `pytest tests`.
 
+### With Docker
+
+Requires Docker only.
+
+```bash
+cp .env.example .env   # then set JWT_SECRET and ADMIN_PASSWORD
+docker compose up --build
+```
+
+The client runs on http://localhost:3000 and the API on http://localhost:5041. Log in with `admin` and the `ADMIN_PASSWORD` from `.env`. The database is kept in the `api-data` volume; `docker compose down -v` deletes it. Set `SEED_SAMPLE_USERS=true` in `.env` to add the sample users.
+
+Stop any `dotnet run` first, since it uses the same ports.
+
 ## Roles
 
 | Role | Sees | Can create, edit and delete |
