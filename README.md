@@ -71,6 +71,74 @@ We chose JWT because the client and API are separate applications. A bearer toke
 - **All input is validated on the server:** username format, email, role and password length.
 - **SQL injection** is prevented by parameterised queries (linq2db), and React escapes all output against XSS.
 
+## Network
+
+The company's network is split into VLANs to improve security and performance. Employee desktops and laptops are in their own VLAN, separate from the servers. This limits the impact of a compromised device and leaves room for more employees. Keeping all servers in a separate VLAN makes it possible to protect critical systems. Visitors get their own guest network, so they can't reach company resources.
+
+| VLAN | Name | Network (CIDR) | Subnet mask | Default gateway | Usable hosts | Devices | Assigned by |
+|---|---|---|---|---|---|---|---|
+| 570 | Clients | 10.5.70.0/24 | 255.255.255.0 | 10.5.70.1 | 254 | 15 desktops, 10 laptops (wired and Wi-Fi) | DHCP |
+| 571 | Servers | 10.5.71.0/24 | 255.255.255.0 | 10.5.71.1 | 254 | 3 servers (incl. login platform VM) | Static |
+| 572 | Printers | 10.5.72.0/27 | 255.255.255.224 | 10.5.72.1 | 30 | 3 network printers | Static |
+| 573 | VoIP | 10.5.73.0/26 | 255.255.255.192 | 10.5.73.1 | 62 | 12 IP phones | DHCP |
+| 574 | Cameras | 10.5.74.0/27 | 255.255.255.224 | 10.5.74.1 | 30 | 6 cameras | Static |
+| 575 | Guest | 10.5.75.0/24 | 255.255.255.0 | 10.5.75.1 | 254 | Guest phones and laptops | DHCP |
+| 576 | Management | 10.5.76.0/27 | 255.255.255.224 | 10.5.76.1 | 30 | Switches, router, APs | Static |
+
+The login platform runs on a VM in the server VLAN (571). Employees in the client VLAN (570) open it on port 8067 (see [With Docker](#with-docker)).
+
+### Subnetting
+
+**VLAN 571 – Servers**
+
+- Network address: 10.5.71.0/24
+- Subnet mask: 255.255.255.0
+- Available hosts: 254
+- Gateway: 10.5.71.1
+
+This subnet is used for the 3 servers currently in operation, but more virtual machines and services may be deployed later. With 254 usable hosts there is plenty of room for expansion.
+
+**VLAN 570 – Clients**
+
+- Network address: 10.5.70.0/24
+- Subnet mask: 255.255.255.0
+- Available hosts: 254
+- Gateway: 10.5.70.1
+
+Employee desktops and laptops use this subnet. The company only has 25 devices, but the network provides 254 usable host addresses. This allows the company to add more employees and devices in the future without redesigning the network.
+
+### Client (VLAN 570)
+
+An employee desktop: an Ubuntu Desktop VM (VM 104) in Proxmox. It gets the address `10.5.70.96` from DHCP in the client VLAN, and opens the login platform on the server at `http://10.5.71.142:8067`.
+
+The login platform opened from the client:
+
+![Login platform opened from the client](docs/screenshots/network/client-browser.png)
+
+The client VM's hardware in Proxmox:
+
+![Client VM hardware](docs/screenshots/network/client-hardware.png)
+
+The client's IP address, `10.5.70.96/24`:
+
+![Client IP address](docs/screenshots/network/client-ip.png)
+
+### Server (VLAN 571)
+
+The login platform server: an Ubuntu Server VM (VM 109) in Proxmox, connected to the `VLAN571` bridge with the address `10.5.71.142`. It runs the platform with Docker (see [With Docker](#with-docker)).
+
+The platform started with `./start.sh`:
+
+![Login platform started on the server](docs/screenshots/network/server-start.png)
+
+The server VM's hardware in Proxmox, with its network device on the `VLAN571` bridge:
+
+![Server VM hardware](docs/screenshots/network/server-hardware.png)
+
+The server's IP address, `10.5.71.142/24`. The `docker0`, `br-…` and `veth…` interfaces are Docker's internal networks:
+
+![Server IP address](docs/screenshots/network/server-ip.png)
+
 ## Screenshots
 
 Login:
