@@ -77,8 +77,8 @@ The company's network is split into VLANs to improve security and performance. E
 
 | VLAN | Name | Network (CIDR) | Subnet mask | Default gateway | Usable hosts | Devices | Assigned by |
 |---|---|---|---|---|---|---|---|
-| 570 | Clients | 10.5.70.0/24 | 255.255.255.0 | 10.5.70.1 | 254 | 15 desktops, 10 laptops (wired and Wi-Fi) | DHCP |
-| 571 | Servers | 10.5.71.0/24 | 255.255.255.0 | 10.5.71.1 | 254 | 3 servers (incl. login platform VM) | Static |
+| 570 | Clients | 10.5.70.0/24 | 255.255.255.0 | 10.5.70.5 | 254 | 15 desktops, 10 laptops (wired and Wi-Fi) | DHCP |
+| 571 | Servers | 10.5.71.0/24 | 255.255.255.0 | 10.5.71.5 | 254 | 3 servers (incl. login platform VM) | Static |
 | 572 | Printers | 10.5.72.0/27 | 255.255.255.224 | 10.5.72.1 | 30 | 3 network printers | Static |
 | 573 | VoIP | 10.5.73.0/26 | 255.255.255.192 | 10.5.73.1 | 62 | 12 IP phones | DHCP |
 | 574 | Cameras | 10.5.74.0/27 | 255.255.255.224 | 10.5.74.1 | 30 | 6 cameras | Static |
